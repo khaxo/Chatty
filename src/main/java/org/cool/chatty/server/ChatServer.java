@@ -7,7 +7,7 @@ import java.net.ServerSocket; // Erlaubt das Warten auf und Akzeptieren von Verb
 import java.net.Socket; // Repräsentiert eine einzelne Verbindung zu einem Client
 import java.util.List; // Schnittstelle für Listen-Datenstrukturen
 import java.util.Scanner; // Zum Einlesen von Benutzereingaben aus der Konsole
-import java.util.concurrent.CopyOnWriteArrayList; // Thread-sichere Liste, geeignet für parallelen Zugriff
+import java.util.concurrent.CopyOnWriteArrayList; // Threadsichere Liste, geeignet für parallelen Zugriff
 
 public class ChatServer {
     private ServerSocket serverSocket; // ServerSocket wartet auf Verbindungsanfragen von Clients
