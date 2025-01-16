@@ -32,7 +32,7 @@ public class ChatServer {
             serverSocket = new ServerSocket(port, 50, bindAddress);
             System.out.println("Server läuft auf IP-Adresse: " + bindAddress.getHostAddress() + " und Port: " + port);
 
-            // Endlosschleife, um kontinuierlich neue Verbindungen zu akzeptieren
+            // Endlosschleife um kontinuierlich neue Verbindungen zu akzeptieren
             while (true) {
                 System.out.println("Waiting for new client...");
 
