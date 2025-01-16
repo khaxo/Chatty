@@ -281,5 +281,190 @@ public class ChatClient extends Application {
         // Rückgabe der fertigen Szene mit definierten Abmessungen
         return new Scene(root, 800, 600);
     }
+    private void setupConnection() {
+        try {
+            // Erstellt eine Verbindung zum Server mit der angegebenen Adresse und dem Port
+            connectionToServer = new Socket(address, port);
+
+            // Initialisiert den Reader zum Lesen von Nachrichten vom Server
+            fromServerReader = new BufferedReader(new InputStreamReader(connectionToServer.getInputStream()));
+
+            // Initialisiert den Writer zum Senden von Nachrichten an den Server
+            toServerWriter = new PrintWriter(new OutputStreamWriter(connectionToServer.getOutputStream()));
+
+            // Sendet eine Begrüßungsnachricht mit dem Benutzernamen an den Server
+            toServerWriter.println("CONNECT:" + username);
+            toServerWriter.flush();
+
+            // Startet einen neuen Thread, um eingehende Nachrichten zu empfangen
+            new Thread(this::receiveMessages).start();
+
+        } catch (IOException e) {
+            // Zeigt eine Fehlermeldung an, falls die Verbindung fehlschlägt
+            showError("Verbindung zum Server fehlgeschlagen: " + e.getMessage());
+        }
+    }
+
+    private void receiveMessages() {
+        try {
+            String message;
+            // Liest Nachrichten kontinuierlich vom Server
+            while ((message = fromServerReader.readLine()) != null) {
+                String finalMessage = message;
+                // Übergibt die Nachricht zur Verarbeitung in die JavaFX-Anwendung
+                Platform.runLater(() -> handleMessage(finalMessage));
+            }
+        } catch (IOException e) {
+            // Zeigt eine Fehlermeldung an, falls die Verbindung unterbrochen wird
+            showError("Verbindung verloren: " + e.getMessage());
+        }
+    }
+
+    private void handleMessage(String message) {
+        // Verarbeitet Nachrichten basierend auf ihrem Typ
+        if (message.startsWith("CONNECT:")) {
+            // Handhabt eine neue Verbindung und fügt den Teilnehmer zur Liste hinzu
+            String participant = message.substring(8);
+            participants.add(participant);
+            displaySystemMessage(participant + " hat den Chat betreten.");
+        } else if (message.startsWith("DISCONNECT:")) {
+            // Entfernt einen Teilnehmer bei Verbindungsabbruch und zeigt eine Systemnachricht
+            String participant = message.substring(11);
+            participants.remove(participant);
+            displaySystemMessage(participant + " hat den Chat verlassen.");
+        } else if (message.startsWith("IMAGE:")) {
+            // Verarbeitet empfangene Bildnachrichten
+            String content = message.substring(6);
+            int firstColon = content.indexOf(":");
+            if (firstColon > 0 && firstColon < content.length() - 1) {
+                String sender = content.substring(0, firstColon);
+                String base64Image = content.substring(firstColon + 1);
+                displayImage(sender, base64Image);
+            } else {
+                // Zeigt eine Fehlermeldung bei ungültigem Bildformat
+                System.err.println("Ungültige Bildnachricht: " + message);
+                displaySystemMessage("Fehler: Ungültige Bildnachricht empfangen.");
+            }
+        } else {
+            // Handhabt reguläre Textnachrichten
+            displayMessage(message);
+        }
+    }
+
+    private void sendMessage() {
+        // Liest den Text aus dem Eingabefeld und sendet ihn, falls er nicht leer ist
+        String message = inputTextField.getText().trim();
+        if (!message.isEmpty()) {
+            toServerWriter.println(username + ": " + message);
+            toServerWriter.flush();
+            inputTextField.clear(); // Leert das Eingabefeld nach dem Senden
+        }
+    }
+
+    private void sendImage() {
+        // Öffnet einen Dateiauswahldialog, um ein Bild zu senden
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Bild auswählen");
+        fileChooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("Bilddateien", "*.png", "*.jpg", "*.jpeg", "*.gif")
+        );
+
+        // Liest die ausgewählte Bilddatei und sendet sie im Base64-Format
+        File selectedFile = fileChooser.showOpenDialog(null);
+        if (selectedFile != null) {
+            try (FileInputStream fis = new FileInputStream(selectedFile)) {
+                byte[] imageBytes = fis.readAllBytes();
+                String encodedImage = Base64.getEncoder().encodeToString(imageBytes);
+                toServerWriter.println("IMAGE:" + username + ":" + encodedImage);
+                toServerWriter.flush();
+            } catch (IOException e) {
+                // Zeigt eine Fehlermeldung an, falls das Bild nicht gesendet werden kann
+                showError("Fehler beim Senden des Bildes: " + e.getMessage());
+            }
+        }
+    }
+
+    private void displayMessage(String message) {
+        // Zeigt eine empfangene Textnachricht in der Benutzeroberfläche an
+        Label messageLabel = new Label(message);
+        messageLabel.setWrapText(true);
+        messageLabel.setTextAlignment(TextAlignment.LEFT);
+        messageLabel.setFont(Font.font("Segoe UI", 14));
+        messageLabel.setStyle("""
+            -fx-background-color: #e0f7fa;
+            -fx-text-fill: #000000;
+            -fx-padding: 10;
+            -fx-border-radius: 10;
+            -fx-background-radius: 10;
+            """);
+        messageContainer.getChildren().add(messageLabel);
+    }
+
+    private void displayImage(String sender, String base64Image) {
+        // Dekodiert das Base64-Bild und zeigt es mit einem Label an
+        byte[] imageBytes = Base64.getDecoder().decode(base64Image);
+        Image image = new Image(new ByteArrayInputStream(imageBytes));
+        ImageView imageView = new ImageView(image);
+        imageView.setFitWidth(200);
+        imageView.setPreserveRatio(true);
+
+        // Label für den Absender der Bildnachricht
+        Label senderLabel = new Label(sender + " hat ein Bild gesendet:");
+        senderLabel.setFont(Font.font("Segoe UI", 14));
+        senderLabel.setStyle("-fx-text-fill: black;");
+
+        // Ermöglicht das Öffnen des Bildes in einem neuen Fenster bei Klick
+        imageView.setOnMouseClicked(event -> openImageInNewWindow(image, sender));
+
+        VBox imageBox = new VBox(5, senderLabel, imageView);
+        imageBox.setAlignment(Pos.CENTER_LEFT);
+        messageContainer.getChildren().add(imageBox);
+    }
+
+    private void openImageInNewWindow(Image image, String sender) {
+        // Öffnet ein Bild in einem neuen Fenster
+        Stage imageStage = new Stage();
+        VBox root = new VBox();
+        root.setPadding(new Insets(10));
+        root.setAlignment(Pos.CENTER);
+
+        ImageView imageView = new ImageView(image);
+        imageView.setPreserveRatio(true);
+        imageView.setFitWidth(500);
+
+        root.getChildren().addAll(imageView);
+
+        Scene scene = new Scene(root, 600, 400);
+        imageStage.setTitle("Bild von " + sender);
+        imageStage.setScene(scene);
+        imageStage.show();
+    }
+
+    private void displaySystemMessage(String message) {
+        // Zeigt Systemnachrichten in der Benutzeroberfläche an
+        Label messageLabel = new Label(message);
+        messageLabel.setWrapText(true);
+        messageLabel.setTextAlignment(TextAlignment.LEFT);
+        messageLabel.setFont(Font.font("Segoe UI", 14));
+        messageLabel.setStyle("""
+            -fx-background-color: #ffcccb;
+            -fx-text-fill: #000000;
+            -fx-padding: 10;
+            -fx-border-radius: 10;
+            -fx-background-radius: 10;
+            """);
+        messageContainer.getChildren().add(messageLabel);
+    }
+
+    private void showError(String message) {
+        // Zeigt eine Fehlermeldung in einem JavaFX-Dialog an
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Fehler");
+            alert.setHeaderText(null);
+            alert.setContentText(message);
+            alert.showAndWait();
+        });
+    }
 
 }
