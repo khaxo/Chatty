@@ -170,4 +170,116 @@ public class ChatClient extends Application {
         primaryStage.setMinHeight(400); // Mindesthöhe
         primaryStage.show(); // Fenster anzeigen
     }
+    private Scene createScene() {
+        // Erstellt ein BorderPane als Hauptlayout-Container
+        BorderPane root = new BorderPane();
+
+        // Setzt das Hintergrundbild des BorderPane mit CSS
+        root.setStyle("""
+        -fx-background-image: url('https://cdn.dribbble.com/users/230290/screenshots/2804358/chatty2.jpg');
+        -fx-background-size: cover;
+        -fx-background-position: center;
+        """);
+
+        // Header-Bereich oben im Layout
+        VBox header = new VBox();
+        header.setPadding(new Insets(10)); // Fügt einen Innenabstand von 10 Pixeln hinzu
+        header.setStyle("""
+        -fx-background-color: rgba(75, 75, 75, 1); // Dunkler Hintergrund für den Header
+        """);
+
+        // Label im Header, zeigt den Benutzernamen an
+        Label headerLabel = new Label("Chatty - Verbunden als: " + username);
+        headerLabel.setTextFill(Color.WHITE); // Setzt die Textfarbe auf Weiß
+        headerLabel.setFont(Font.font("Segoe UI", 20)); // Definiert die Schriftart und -größe
+        headerLabel.setAlignment(Pos.CENTER); // Zentriert den Text
+
+        // Header-Elemente zum VBox-Container hinzufügen
+        header.getChildren().addAll(headerLabel);
+
+        // Nachrichtenbereich (Container für Chat-Nachrichten)
+        messageContainer = new VBox(10); // Vertikaler Abstand von 10 Pixeln zwischen den Nachrichten
+        messageContainer.setPadding(new Insets(10)); // Innenabstand von 10 Pixeln
+        messageContainer.setPrefWidth(600); // Fixe Breite von 600 Pixeln
+        messageContainer.setStyle("""
+        -fx-background-color: rgba(255, 255, 255, 0.8); // Leicht transparenter weißer Hintergrund
+        -fx-border-radius: 10;
+        -fx-background-radius: 10;
+        """);
+
+        // ScrollPane, um den Nachrichtenbereich scrollbar zu machen
+        ScrollPane scrollPane = new ScrollPane(messageContainer);
+        scrollPane.setFitToWidth(true); // ScrollPane passt sich der Breite an
+        scrollPane.setStyle("""
+        -fx-background: transparent; // Transparentes ScrollPane
+        -fx-background-color: transparent;
+        -fx-border-color: transparent;
+        """);
+        // Automatisches Scrollen zum Ende, wenn neue Nachrichten hinzukommen
+        scrollPane.vvalueProperty().bind(messageContainer.heightProperty());
+
+        // Eingabefeld für die Texteingabe
+        inputTextField = new TextField();
+        inputTextField.setPromptText("Nachricht schreiben..."); // Platzhaltertext
+        inputTextField.setPrefWidth(580); // Breite leicht schmaler als der Nachrichtenbereich
+        inputTextField.setStyle("""
+        -fx-background-color: rgba(255, 255, 255, 0.9); // Weißer Hintergrund
+        -fx-border-color: rgba(0, 122, 204, 0.8); // Blaue Umrandung
+        -fx-border-radius: 5;
+        -fx-padding: 8;
+        -fx-font-family: 'Segoe UI', sans-serif; // Schriftart
+        -fx-font-size: 14px;
+        """);
+
+        // Fügt die Funktionalität hinzu, Nachrichten mit Enter zu senden
+        inputTextField.setOnKeyPressed(event -> {
+            if (event.getCode() == KeyCode.ENTER) {
+                sendMessage();
+            }
+        });
+
+        // Senden-Button für Nachrichten
+        Button sendButton = new Button("Senden");
+        sendButton.setStyle("""
+        -fx-background-color: #007acc; // Blaues Design
+        -fx-text-fill: white; // Weißer Text
+        -fx-font-size: 14px;
+        -fx-font-family: 'Segoe UI', sans-serif;
+        -fx-padding: 10 20 10 20; // Innenabstand
+        -fx-border-radius: 5;
+        -fx-cursor: hand; // Cursor zeigt Hand-Symbol
+        """);
+        sendButton.setOnAction(event -> sendMessage()); // Nachricht senden bei Klick
+
+        // Button zum Senden von Bildern
+        Button imageButton = new Button("📷"); // Icon-Button
+        imageButton.setStyle("""
+        -fx-background-color: #007acc; // Blaues Design
+        -fx-text-fill: white; // Weißer Text
+        -fx-font-size: 14px;
+        -fx-font-family: 'Segoe UI', sans-serif;
+        -fx-padding: 10 20 10 20; // Innenabstand
+        -fx-border-radius: 5;
+        -fx-cursor: hand; // Cursor zeigt Hand-Symbol
+        """);
+        imageButton.setOnAction(event -> sendImage()); // Bild senden bei Klick
+
+        // Container für Eingabefeld und Buttons (unten im Layout)
+        HBox inputContainer = new HBox(10, inputTextField, sendButton, imageButton); // Abstand von 10 Pixeln
+        inputContainer.setPadding(new Insets(10)); // Innenabstand von 10 Pixeln
+        inputContainer.setStyle("""
+        -fx-background-color: rgba(255, 255, 255, 0.9); // Weißer Hintergrund
+        -fx-border-radius: 10;
+        """);
+        inputContainer.setAlignment(Pos.CENTER); // Zentriert die Elemente
+
+        // Layout-Komponenten in das BorderPane setzen
+        root.setTop(header); // Header oben
+        root.setCenter(scrollPane); // Nachrichtenbereich in der Mitte
+        root.setBottom(inputContainer); // Eingabebereich unten
+
+        // Rückgabe der fertigen Szene mit definierten Abmessungen
+        return new Scene(root, 800, 600);
+    }
+
 }
