@@ -36,7 +36,7 @@ public class ChatServer {
             while (true) {
                 System.out.println("Waiting for new client...");
 
-                // Wartet, bis ein neuer Client eine Verbindung aufbaut
+                // Wartet, bis ein neuer Client eine Verbindung aufbaut!!!
                 Socket connectionToClient = serverSocket.accept();
                 // accept() blockiert, bis eine neue Verbindung eingeht, und gibt ein Socket-Objekt zurück,
                 // das die Verbindung zu diesem Client repräsentiert.
