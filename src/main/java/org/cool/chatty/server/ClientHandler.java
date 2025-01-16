@@ -1,6 +1,5 @@
 package org.cool.chattoold.server;
 
-
 import java.io.*;
 import java.net.Socket;
 
