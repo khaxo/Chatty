@@ -1,7 +1,7 @@
 package org.cool.chatty.server;
 
 // Importiert Klassen, die für Netzwerkkommunikation, Eingabe/Ausgabe und Threads benötigt werden
-import java.io.IOException; // Wird verwendet, um Eingabe-/Ausgabefehler zu behandeln
+import java.io.IOException; // Wird verwendet, um Eingabe- und Ausgabefehler zu behandeln
 import java.net.InetAddress; // Repräsentiert eine IP-Adresse
 import java.net.ServerSocket; // Erlaubt das Warten auf und Akzeptieren von Verbindungen von Clients
 import java.net.Socket; // Repräsentiert eine einzelne Verbindung zu einem Client
