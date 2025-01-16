@@ -23,62 +23,73 @@ import java.util.Base64;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * Die Hauptklasse des Chat-Clients.
+ * Diese Klasse verbindet den Benutzer mit dem Server, stellt die Benutzeroberfläche bereit
+ * und ermöglicht die Kommunikation mit anderen Benutzern im Chat.
+ */
 public class ChatClient extends Application {
 
-    private String address;
-    private int port;
-    private String username;
+    // Server-Adresse und Portnummer
+    private String address; // Die IP-Adresse des Servers
+    private int port; // Der Port des Servers
+    private String username; // Der Benutzername des aktuellen Benutzers
 
-    // Connection
-    private Socket connectionToServer;
-    private BufferedReader fromServerReader;
-    private PrintWriter toServerWriter;
+    // Verbindungselemente
+    private Socket connectionToServer; // Verbindung zum Server
+    private BufferedReader fromServerReader; // Leser für eingehende Nachrichten
+    private PrintWriter toServerWriter; // Schreiber für ausgehende Nachrichten
 
-    // GUI Elements
-    private VBox messageContainer;
-    private TextField inputTextField;
-    private VBox participantsContainer;
-    private Set<String> participants;
+    // GUI-Elemente
+    private VBox messageContainer; // Container für Nachrichten
+    private TextField inputTextField; // Eingabefeld für Nachrichten
+    private VBox participantsContainer; // Container für Teilnehmerliste
+    private Set<String> participants; // Liste der aktuellen Teilnehmer
 
+    /**
+     * Hauptmethode der Anwendung.
+     * Startet die JavaFX-Anwendung.
+     * @param args Argumente der Kommandozeile (nicht verwendet).
+     */
     public static void main(String[] args) {
-        launch(args);
+        launch(args); // Startet die JavaFX-Anwendung
     }
 
     @Override
     public void start(Stage primaryStage) {
-        participants = new HashSet<>();
+        participants = new HashSet<>(); // Initialisierung der Teilnehmerliste
 
-        // Dialog mit modernem Layout
+        // Erstellen eines Dialogs für Verbindungsinformationen
         Dialog<Pair<String, Pair<String, String>>> dialog = new Dialog<>();
         dialog.setTitle("Chatty - Verbinden");
-        dialog.setHeaderText(null); // Kein separater Header
+        dialog.setHeaderText(null); // Kein zusätzlicher Header
 
-        // Buttons
+        // Verbindungs-Button hinzufügen
         ButtonType connectButtonType = new ButtonType("Verbinden", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(connectButtonType, ButtonType.CANCEL);
 
-        // Hauptlayout des Dialogs
-        VBox dialogContent = new VBox(20);
-        dialogContent.setAlignment(Pos.CENTER);
-        dialogContent.setPadding(new Insets(20));
+        // Layout des Dialogs
+        VBox dialogContent = new VBox(20); // Vertikales Layout mit 20px Abstand
+        dialogContent.setAlignment(Pos.CENTER); // Zentrierte Inhalte
+        dialogContent.setPadding(new Insets(20)); // Innenabstand
         dialogContent.setStyle("-fx-background-color: #f4f4f4; -fx-border-radius: 10; -fx-background-radius: 10;");
 
-        // Schlüssel-Symbol
+        // Symbol für den Dialog
         Label keyIcon = new Label("🔑");
-        keyIcon.setFont(Font.font("Segoe UI Emoji", 50));
-        keyIcon.setTextFill(Color.DARKBLUE);
+        keyIcon.setFont(Font.font("Segoe UI Emoji", 50)); // Schriftgröße und Emoji
+        keyIcon.setTextFill(Color.DARKBLUE); // Textfarbe
 
         // Titel des Dialogs
         Label titleLabel = new Label("Willkommen bei Chatty!");
-        titleLabel.setFont(Font.font("Segoe UI", 20));
-        titleLabel.setTextFill(Color.DARKBLUE);
+        titleLabel.setFont(Font.font("Segoe UI", 20)); // Schriftgröße
+        titleLabel.setTextFill(Color.DARKBLUE); // Textfarbe
 
-        // Benutzername Eingabefeld
-        HBox usernameBox = new HBox(10);
+        // Eingabefeld für den Benutzernamen
+        HBox usernameBox = new HBox(10); // Horizontales Layout mit 10px Abstand
         usernameBox.setAlignment(Pos.CENTER_LEFT);
         Label usernameIcon = new Label("👤");
-        usernameIcon.setFont(Font.font("Segoe UI Emoji", 24));
-        TextField usernameField = new TextField();
+        usernameIcon.setFont(Font.font("Segoe UI Emoji", 24)); // Icon für Benutzername
+        TextField usernameField = new TextField(); // Eingabefeld für den Benutzernamen
         usernameField.setPromptText("Benutzername eingeben");
         usernameField.setStyle("""
             -fx-background-color: white;
@@ -89,12 +100,12 @@ public class ChatClient extends Application {
             """);
         usernameBox.getChildren().addAll(usernameIcon, usernameField);
 
-        // IP-Adresse Eingabefeld
+        // Eingabefeld für die IP-Adresse
         HBox ipBox = new HBox(10);
         ipBox.setAlignment(Pos.CENTER_LEFT);
         Label ipIcon = new Label("🌐");
         ipIcon.setFont(Font.font("Segoe UI Emoji", 24));
-        TextField ipField = new TextField("localhost");
+        TextField ipField = new TextField("localhost"); // Standardmäßig "localhost"
         ipField.setPromptText("Server-IP-Adresse eingeben");
         ipField.setStyle("""
             -fx-background-color: white;
@@ -105,12 +116,12 @@ public class ChatClient extends Application {
             """);
         ipBox.getChildren().addAll(ipIcon, ipField);
 
-        // Port Eingabefeld
+        // Eingabefeld für den Port
         HBox portBox = new HBox(10);
         portBox.setAlignment(Pos.CENTER_LEFT);
         Label portIcon = new Label("🔌");
         portIcon.setFont(Font.font("Segoe UI Emoji", 24));
-        TextField portField = new TextField("3141");
+        TextField portField = new TextField("3141"); // Standard-Port
         portField.setPromptText("Port eingeben");
         portField.setStyle("""
             -fx-background-color: white;
@@ -121,19 +132,17 @@ public class ChatClient extends Application {
             """);
         portBox.getChildren().addAll(portIcon, portField);
 
-        // Hinweis
+        // Hinweistext
         Label hintLabel = new Label("Bitte geben Sie Ihren Benutzernamen, die Server-IP-Adresse und den Port ein.");
         hintLabel.setFont(Font.font("Segoe UI", 14));
-        hintLabel.setTextFill(Color.GRAY);
+        hintLabel.setTextFill(Color.GRAY); // Grauer Hinweistext
 
-        // Zusammenfügen der Inhalte
+        // Zusammenfügen der Dialogelemente
         dialogContent.getChildren().addAll(keyIcon, titleLabel, hintLabel, usernameBox, ipBox, portBox);
-
-        // Dialog-Inhalt setzen
         dialog.getDialogPane().setContent(dialogContent);
         dialog.getDialogPane().setStyle("-fx-border-radius: 10; -fx-background-radius: 10;");
 
-        // Ergebnis verarbeiten
+        // Verarbeiten der Dialogeingaben
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == connectButtonType) {
                 return new Pair<>(usernameField.getText(), new Pair<>(ipField.getText(), portField.getText()));
@@ -141,24 +150,24 @@ public class ChatClient extends Application {
             return null;
         });
 
-        // Dialog anzeigen
+        // Dialog anzeigen und Benutzereingaben verarbeiten
         dialog.showAndWait().ifPresent(result -> {
-            username = result.getKey();
-            address = result.getValue().getKey();
+            username = result.getKey(); // Benutzername setzen
+            address = result.getValue().getKey(); // IP-Adresse setzen
             try {
-                port = Integer.parseInt(result.getValue().getValue());
+                port = Integer.parseInt(result.getValue().getValue()); // Portnummer setzen
             } catch (NumberFormatException e) {
                 showError("Ungültiger Port: " + result.getValue().getValue());
                 return;
             }
-            setupConnection();
+            setupConnection(); // Verbindung mit den eingegebenen Daten herstellen
         });
 
-        // Hauptfenster
+        // Hauptfenster erstellen
         primaryStage.setTitle("Chatty - Willkommen, " + (username != null ? username : "Gast"));
-        primaryStage.setScene(createScene());
-        primaryStage.setMinWidth(600);
-        primaryStage.setMinHeight(400);
-        primaryStage.show();
+        primaryStage.setScene(createScene()); // Szene mit der Benutzeroberfläche erstellen
+        primaryStage.setMinWidth(600); // Mindestbreite
+        primaryStage.setMinHeight(400); // Mindesthöhe
+        primaryStage.show(); // Fenster anzeigen
     }
 }
