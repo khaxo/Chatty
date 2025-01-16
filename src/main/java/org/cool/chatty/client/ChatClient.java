@@ -281,6 +281,8 @@ public class ChatClient extends Application {
         // Rückgabe der fertigen Szene mit definierten Abmessungen
         return new Scene(root, 800, 600);
     }
+
+
     private void setupConnection() {
         try {
             // Erstellt eine Verbindung zum Server mit der angegebenen Adresse und dem Port
