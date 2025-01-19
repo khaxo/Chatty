@@ -1,4 +1,4 @@
-package org.cool.chattoold.server;
+package org.cool.chatty.server;
 
 import java.io.*;
 import java.net.Socket;
