@@ -185,6 +185,7 @@ public class ChatClient extends Application {
         // Erstellt ein BorderPane als Hauptlayout-Container
         BorderPane root = new BorderPane();
 
+
         // Setzt das Hintergrundbild des BorderPane mit CSS
         root.setStyle("""
         -fx-background-image: url('https://cdn.dribbble.com/users/230290/screenshots/2804358/chatty2.jpg');
