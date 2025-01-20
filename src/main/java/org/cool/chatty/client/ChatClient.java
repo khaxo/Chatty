@@ -21,6 +21,7 @@ import java.io.*;
 import java.net.Socket;
 import java.util.Base64;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -45,6 +46,14 @@ public class ChatClient extends Application {
     private TextField inputTextField; // Eingabefeld für Nachrichten
     private VBox participantsContainer; // Container für Teilnehmerliste
     private Set<String> participants; // Liste der aktuellen Teilnehmer
+
+    // Map für Textkürzel zu Unicode-Emoji
+    private static final Map<String, String> emojiMap = Map.of(
+            ":)", "\uD83D\uDE42",  // 🙂 - lächelnd
+            ":D", "\uD83D\uDE04",  // 😀 - lachend
+            ":(", "\uD83D\uDE41"   // 🙁 - traurig
+    );
+
 
     /**
      * Hauptmethode der Anwendung.
@@ -202,7 +211,6 @@ public class ChatClient extends Application {
         messageContainer.setPadding(new Insets(10)); // Innenabstand von 10 Pixeln
         messageContainer.setPrefWidth(600); // Fixe Breite von 600 Pixeln
         messageContainer.setStyle("""
-        -fx-background-color: rgba(255, 255, 255, 0.8); // Leicht transparenter weißer Hintergrund
         -fx-border-radius: 10;
         -fx-background-radius: 10;
         """);
@@ -357,11 +365,24 @@ public class ChatClient extends Application {
         // Liest den Text aus dem Eingabefeld und sendet ihn, falls er nicht leer ist
         String message = inputTextField.getText().trim();
         if (!message.isEmpty()) {
-            toServerWriter.println(username + ": " + message);
+            toServerWriter.println(username + ": " + replaceEmojis(message));
             toServerWriter.flush();
             inputTextField.clear(); // Leert das Eingabefeld nach dem Senden
         }
     }
+
+    /**
+     * Ersetzt Textkürzel wie :) durch Unicode-Emojis.
+     * @param message Die ursprüngliche Nachricht
+     * @return Die Nachricht mit Emojis
+     */
+    private String replaceEmojis(String message) {
+        for (Map.Entry<String, String> entry : emojiMap.entrySet()) {
+            message = message.replace(entry.getKey(), entry.getValue());
+        }
+        return message;
+    }
+
 
     private void sendImage() {
         // Öffnet einen Dateiauswahldialog, um ein Bild zu senden
@@ -388,7 +409,7 @@ public class ChatClient extends Application {
 
     private void displayMessage(String message) {
         // Zeigt eine empfangene Textnachricht in der Benutzeroberfläche an
-        Label messageLabel = new Label(message);
+        Label messageLabel = new Label(replaceEmojis(message));
         messageLabel.setWrapText(true);
         messageLabel.setTextAlignment(TextAlignment.LEFT);
         messageLabel.setFont(Font.font("Segoe UI", 14));
