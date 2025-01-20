@@ -8,6 +8,8 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -183,6 +185,7 @@ public class ChatClient extends Application {
         // Erstellt ein BorderPane als Hauptlayout-Container
         BorderPane root = new BorderPane();
 
+
         // Setzt das Hintergrundbild des BorderPane mit CSS
         root.setStyle("""
         -fx-background-image: url('https://cdn.dribbble.com/users/230290/screenshots/2804358/chatty2.jpg');
@@ -194,12 +197,12 @@ public class ChatClient extends Application {
         VBox header = new VBox();
         header.setPadding(new Insets(10)); // Fügt einen Innenabstand von 10 Pixeln hinzu
         header.setStyle("""
-        -fx-background-color: rgba(75, 75, 75, 1); // Dunkler Hintergrund für den Header
+        -fx-background-color: rgba(255, 255, 255, 1); // Dunkler Hintergrund für den Header
         """);
 
         // Label im Header, zeigt den Benutzernamen an
         Label headerLabel = new Label("Chatty - Verbunden als: " + username);
-        headerLabel.setTextFill(Color.WHITE); // Setzt die Textfarbe auf Weiß
+        headerLabel.setTextFill(Color.BLACK); // Setzt die Textfarbe auf Weiß
         headerLabel.setFont(Font.font("Segoe UI", 20)); // Definiert die Schriftart und -größe
         headerLabel.setAlignment(Pos.CENTER); // Zentriert den Text
 
@@ -288,6 +291,7 @@ public class ChatClient extends Application {
 
         // Rückgabe der fertigen Szene mit definierten Abmessungen
         return new Scene(root, 800, 600);
+
     }
 
 
@@ -362,14 +366,78 @@ public class ChatClient extends Application {
     }
 
     private void sendMessage() {
-        // Liest den Text aus dem Eingabefeld und sendet ihn, falls er nicht leer ist
         String message = inputTextField.getText().trim();
         if (!message.isEmpty()) {
-            toServerWriter.println(username + ": " + replaceEmojis(message));
-            toServerWriter.flush();
-            inputTextField.clear(); // Leert das Eingabefeld nach dem Senden
+            // Überprüfen, ob die Nachricht vom Benutzer selbst ist
+            boolean isOwnMessage = true; // Passe dies an, z. B. durch Benutzernamen vergleichen
+            String sender = isOwnMessage ? "Du" : "Anderer Benutzer"; // Beispiel für den Absender
+
+            // Nachricht als Label
+            Label messageLabel = new Label(message);
+            messageLabel.setWrapText(true);
+            messageLabel.setMaxWidth(400); // Maximalbreite der Nachrichtenblase
+
+            // Kontextmenü hinzufügen
+            ContextMenu contextMenu = new ContextMenu();
+
+            // Option "Kopieren"
+            MenuItem copyItem = new MenuItem("Kopieren");
+            copyItem.setOnAction(event -> {
+                Clipboard clipboard = Clipboard.getSystemClipboard();
+                ClipboardContent content = new ClipboardContent();
+                content.putString(message);
+                clipboard.setContent(content);
+            });
+
+            // Option "Antworten"
+            MenuItem replyItem = new MenuItem("Antworten");
+            replyItem.setOnAction(event -> {
+                String replyPrefix = "Antwort auf [" + sender + "]: \"" + message + "\"\n";
+                inputTextField.setText(replyPrefix); // Nachricht mit Absender und Originaltext ins Eingabefeld
+                inputTextField.requestFocus(); // Eingabefeld fokussieren
+            });
+
+            // Kontextmenü mit Optionen
+            contextMenu.getItems().addAll(copyItem, replyItem);
+            messageLabel.setContextMenu(contextMenu); // Kontextmenü dem Label zuweisen
+
+            // Unterscheidung der Farben
+            if (isOwnMessage) {
+                messageLabel.setStyle("""
+                -fx-background-color: #DCF8C6; /* Hellgrün für eigene Nachrichten */
+                -fx-text-fill: black;
+                -fx-padding: 10;
+                -fx-border-radius: 10;
+                -fx-background-radius: 10;
+            """);
+            } else {
+                messageLabel.setStyle("""
+                -fx-background-color: #E4FFC7; /* Hellgrün für empfangene Nachrichten */
+                -fx-text-fill: black;
+                -fx-padding: 10;
+                -fx-border-radius: 10;
+                -fx-background-radius: 10;
+            """);
+            }
+
+            // Nachricht in einen HBox-Container einfügen
+            HBox messageBox = new HBox(messageLabel);
+            if (isOwnMessage) {
+                messageBox.setAlignment(Pos.CENTER_RIGHT);
+            } else {
+                messageBox.setAlignment(Pos.CENTER_LEFT);
+            }
+
+            // Nachricht dem Container hinzufügen
+            messageContainer.getChildren().add(messageBox);
+
+            // Eingabefeld leeren
+            inputTextField.clear();
         }
     }
+
+
+
 
     /**
      * Ersetzt Textkürzel wie :) durch Unicode-Emojis.
