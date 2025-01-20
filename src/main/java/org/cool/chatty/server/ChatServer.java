@@ -100,8 +100,8 @@ public class ChatServer {
         System.out.println("Geben Sie die IP-Adresse ein, auf der der Server laufen soll (z.B. 0.0.0.0 für alle Interfaces):");
         String ipAddress = scanner.nextLine(); // Liest die IP-Adresse von der Konsole ein
 
-        // Fragt den Benutzer nach dem Port, auf dem der Server lauschen soll
-        System.out.println("Geben Sie den Port ein, auf dem der Server lauschen soll:");
+        // Fragt den Benutzer nach dem Port, auf den der Server warten soll
+        System.out.println("Legen Sie einen Port fest!:");
         int port = scanner.nextInt(); // Liest den Port von der Konsole ein
 
         // Erstellt eine neue Instanz des ChatServers mit den angegebenen Parametern
