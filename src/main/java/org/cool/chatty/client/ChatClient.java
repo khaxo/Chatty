@@ -495,6 +495,7 @@ public class ChatClient extends Application {
             toServerWriter.flush();
             inputTextField.clear(); // Leert das Eingabefeld nach dem Senden
         }
+
     }
 
 
