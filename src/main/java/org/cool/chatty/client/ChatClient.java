@@ -485,10 +485,14 @@ public class ChatClient extends Application {
             boolean isOwnMessage = true; // Passe dies an, z. B. durch Benutzernamen vergleichen
             String sender = isOwnMessage ? "Du" : "Anderer Benutzer"; // Beispiel für den Absender
 
-            // Nachricht als Label
-            Label messageLabel = new Label(replaceEmojis(message));
+            // Nachricht verarbeiten und an den Server senden
+            Label messageLabel = new Label();
+            String processedMessage = replaceEmojis(message); // Emojis in der Nachricht ersetzen
+            messageLabel.setText(processedMessage); // Nachricht im Label anzeigen
+            toServerWriter.println(processedMessage); // Nachricht an den Server senden
             messageLabel.setWrapText(true);
             messageLabel.setMaxWidth(400); // Maximalbreite der Nachrichtenblase
+
 
             // Kontextmenü hinzufügen
             ContextMenu contextMenu = new ContextMenu();
