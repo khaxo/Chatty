@@ -474,85 +474,28 @@ public class ChatClient extends Application {
             }
         } else {
             // Handhabt reguläre Textnachrichten
-            displayMessage(message);
+            int firstColon = message.indexOf(":");
+            if (firstColon > 0 && firstColon < message.length() - 1) {
+                String sender = message.substring(0, firstColon);
+                String textMessage = message.substring(firstColon + 1).trim();
+                displayMessage(sender, textMessage);
+            } else {
+                // Nachricht ohne gültiges Format
+                System.err.println("Ungültige Textnachricht: " + message);
+            }
         }
     }
+
 
     private void sendMessage() {
+        // Liest den Text aus dem Eingabefeld und sendet ihn, falls er nicht leer ist
         String message = inputTextField.getText().trim();
         if (!message.isEmpty()) {
-            // Überprüfen, ob die Nachricht vom Benutzer selbst ist
-            boolean isOwnMessage = true; // Passe dies an, z. B. durch Benutzernamen vergleichen
-            String sender = isOwnMessage ? "Du" : "Anderer Benutzer"; // Beispiel für den Absender
-
-            // Nachricht verarbeiten und an den Server senden
-            Label messageLabel = new Label();
-            String processedMessage = replaceEmojis(message); // Emojis in der Nachricht ersetzen
-            messageLabel.setText(processedMessage); // Nachricht im Label anzeigen
-            toServerWriter.println(processedMessage); // Nachricht an den Server senden
-            messageLabel.setWrapText(true);
-            messageLabel.setMaxWidth(400); // Maximalbreite der Nachrichtenblase
-
-
-            // Kontextmenü hinzufügen
-            ContextMenu contextMenu = new ContextMenu();
-
-            // Option "Kopieren"
-            MenuItem copyItem = new MenuItem("Kopieren");
-            copyItem.setOnAction(event -> {
-                Clipboard clipboard = Clipboard.getSystemClipboard();
-                ClipboardContent content = new ClipboardContent();
-                content.putString(message);
-                clipboard.setContent(content);
-            });
-
-            // Option "Antworten"
-            MenuItem replyItem = new MenuItem("Antworten");
-            replyItem.setOnAction(event -> {
-                String replyPrefix = "Antwort auf [" + sender + "]: \"" + message + "\"\n";
-                inputTextField.setText(replyPrefix); // Nachricht mit Absender und Originaltext ins Eingabefeld
-                inputTextField.requestFocus(); // Eingabefeld fokussieren
-            });
-
-            // Kontextmenü mit Optionen
-            contextMenu.getItems().addAll(copyItem, replyItem);
-            messageLabel.setContextMenu(contextMenu); // Kontextmenü dem Label zuweisen
-
-            // Unterscheidung der Farben
-            if (isOwnMessage) {
-                messageLabel.setStyle("""
-                -fx-background-color: #DCF8C6; /* Hellgrün für eigene Nachrichten */
-                -fx-text-fill: black;
-                -fx-padding: 10;
-                -fx-border-radius: 10;
-                -fx-background-radius: 10;
-            """);
-            } else {
-                messageLabel.setStyle("""
-                -fx-background-color: #E4FFC7; /* Hellgrün für empfangene Nachrichten */
-                -fx-text-fill: black;
-                -fx-padding: 10;
-                -fx-border-radius: 10;
-                -fx-background-radius: 10;
-            """);
-            }
-
-            // Nachricht in einen HBox-Container einfügen
-            HBox messageBox = new HBox(messageLabel);
-            if (isOwnMessage) {
-                messageBox.setAlignment(Pos.CENTER_RIGHT);
-            } else {
-                messageBox.setAlignment(Pos.CENTER_LEFT);
-            }
-
-            // Nachricht dem Container hinzufügen
-            messageContainer.getChildren().add(messageBox);
-
-            // Eingabefeld leeren
-            inputTextField.clear();
+            toServerWriter.println(username + ": " + replaceEmojis(message));
+            toServerWriter.flush();
+            inputTextField.clear(); // Leert das Eingabefeld nach dem Senden
         }
     }
-
 
 
 
@@ -592,21 +535,54 @@ public class ChatClient extends Application {
         }
     }
 
-    private void displayMessage(String message) {
-        // Zeigt eine empfangene Textnachricht in der Benutzeroberfläche an
+    private void displayMessage(String sender, String message) {
+        // Überprüft, ob der Absender der Benutzer selbst ist
+        boolean isCurrentUser = sender.equals(username);
+
+        // Label für den Absender
+        Label senderLabel = new Label(isCurrentUser ? "Du" : sender);
+        senderLabel.setFont(Font.font("Segoe UI", 12));
+        senderLabel.setStyle("-fx-text-fill: black;");
+
+        // Label für die Nachricht
         Label messageLabel = new Label(replaceEmojis(message));
         messageLabel.setWrapText(true);
-        messageLabel.setTextAlignment(TextAlignment.LEFT);
         messageLabel.setFont(Font.font("Segoe UI", 14));
-        messageLabel.setStyle("""
+
+        // Richtet das Styling basierend auf dem Absender ein
+        if (isCurrentUser) {
+            messageLabel.setStyle("""
+            -fx-background-color: #d1e7dd;
+            -fx-text-fill: #000000;
+            -fx-padding: 10;
+            -fx-border-radius: 10;
+            -fx-background-radius: 10;
+            """);
+            messageLabel.setTextAlignment(TextAlignment.RIGHT);
+        } else {
+            messageLabel.setStyle("""
             -fx-background-color: #e0f7fa;
             -fx-text-fill: #000000;
             -fx-padding: 10;
             -fx-border-radius: 10;
             -fx-background-radius: 10;
             """);
-        messageContainer.getChildren().add(messageLabel);
+            messageLabel.setTextAlignment(TextAlignment.LEFT);
+        }
+
+        // VBox für Benutzername und Nachricht
+        VBox messageBox = new VBox(5, senderLabel, messageLabel);
+        if (isCurrentUser) {
+            messageBox.setAlignment(Pos.CENTER_RIGHT);
+        } else {
+            messageBox.setAlignment(Pos.CENTER_LEFT);
+        }
+
+        // Fügt die Nachricht zur Benutzeroberfläche hinzu
+        messageContainer.getChildren().add(messageBox);
     }
+
+
 
     private void displayImage(String sender, String base64Image) {
         // Dekodiert das Base64-Bild und zeigt es mit einem Label an
