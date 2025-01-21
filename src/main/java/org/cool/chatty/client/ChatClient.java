@@ -486,7 +486,7 @@ public class ChatClient extends Application {
             String sender = isOwnMessage ? "Du" : "Anderer Benutzer"; // Beispiel für den Absender
 
             // Nachricht als Label
-            Label messageLabel = new Label(message);
+            Label messageLabel = new Label(replaceEmojis(message));
             messageLabel.setWrapText(true);
             messageLabel.setMaxWidth(400); // Maximalbreite der Nachrichtenblase
 
