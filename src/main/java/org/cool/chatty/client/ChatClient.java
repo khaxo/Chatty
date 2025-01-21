@@ -228,7 +228,7 @@ public class ChatClient extends Application {
             if (!newValue) { // Wenn das Feld den Fokus verliert
                 try {
                     int port = Integer.parseInt(portField.getText());
-                    if (port < 0 || port > 65535) { // Ports müssen zwischen 0 und 65535 liegen
+                    if (port < 0 || port > 9999) { // Ports müssen zwischen 0 und 9999 liegen
                         throw new NumberFormatException();
                     }
                     portField.setStyle("""
