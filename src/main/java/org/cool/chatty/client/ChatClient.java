@@ -18,6 +18,7 @@ import javafx.scene.text.TextAlignment;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Pair;
+import org.cool.chatty.server.ChatServer;
 
 import java.io.*;
 import java.net.Socket;
@@ -25,6 +26,8 @@ import java.util.Base64;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
+import static org.cool.chatty.server.ChatServer.isValidIPv4;
 
 /**
  * Die Hauptklasse des Chat-Clients.
@@ -109,39 +112,146 @@ public class ChatClient extends Application {
             -fx-border-radius: 5;
             -fx-font-family: 'Segoe UI', sans-serif;
             """);
+        // Event-Listener, um Eingabe zu validieren, Textfeld Border leuchtet rot auf, wenn keine Eingabe im Benutzerfeld stattfindet
+        usernameField.focusedProperty().addListener((observable, oldValue, newValue) -> {
+            if (!newValue) { // Prüfung, wenn das Feld den Fokus verliert
+                if (usernameField.getText().trim().isEmpty()) {
+                    usernameField.setStyle("""
+                -fx-background-color: white;
+                -fx-border-color: red;
+                -fx-padding: 8;
+                -fx-border-radius: 8;
+                -fx-font-family: 'Segoe UI', sans-serif;
+            """);
+                } else {
+                    usernameField.setStyle("""
+                -fx-background-color: white;
+                -fx-border-color: #007acc;
+                -fx-padding: 8;
+                -fx-border-radius: 5;
+                -fx-font-family: 'Segoe UI', sans-serif;
+            """);
+                }
+            }
+        });
         usernameBox.getChildren().addAll(usernameIcon, usernameField);
 
         // Eingabefeld für die IP-Adresse
         HBox ipBox = new HBox(10);
         ipBox.setAlignment(Pos.CENTER_LEFT);
+
         Label ipIcon = new Label("🌐");
         ipIcon.setFont(Font.font("Segoe UI Emoji", 24));
-        TextField ipField = new TextField("localhost"); // Standardmäßig "localhost"
+
+        TextField ipField = new TextField("0.0.0.0"); // Standardmäßig "0.0.0.0"
         ipField.setPromptText("Server-IP-Adresse eingeben");
         ipField.setStyle("""
-            -fx-background-color: white;
-            -fx-border-color: #007acc;
-            -fx-padding: 8;
-            -fx-border-radius: 5;
-            -fx-font-family: 'Segoe UI', sans-serif;
+    -fx-background-color: white;
+    -fx-border-color: #007acc;
+    -fx-padding: 8;
+    -fx-border-radius: 5;
+    -fx-font-family: 'Segoe UI', sans-serif;
+""");
+
+// Event-Listener zur Validierung der Eingabe
+        ipField.textProperty().addListener((observable, oldValue, newValue) -> {
+            // Entfernt ungültige Zeichen (keine Buchstaben erlaubt)
+            if (!newValue.matches("\\d{0,3}(\\.\\d{0,3}){0,3}")) {
+                ipField.setText(oldValue); // Zurücksetzen auf die vorherige gültige Eingabe
+            }
+
+            // Maximal 15 Zeichen (IPv4-Adressen)
+            if (newValue.length() > 15) {
+                ipField.setText(oldValue); // Zurücksetzen auf die vorherige Eingabe, wenn die Länge überschritten wird
+            }
+        });
+
+// Event-Listener, um den Rahmen bei ungültigen Eingaben rot zu färben
+        ipField.focusedProperty().addListener((observable, oldValue, newValue) -> {
+            if (!newValue) { // Wenn das Feld den Fokus verliert
+                if (!ChatServer.isValidIPv4(ipField.getText())) { // Aufruf der Methode aus ChatServer
+                    ipField.setStyle("""
+                -fx-background-color: white;
+                -fx-border-color: red;
+                -fx-padding: 8;
+                -fx-border-radius: 5;
+                -fx-font-family: 'Segoe UI', sans-serif;
             """);
+                } else {
+                    ipField.setStyle("""
+                -fx-background-color: white;
+                -fx-border-color: #007acc;
+                -fx-padding: 8;
+                -fx-border-radius: 5;
+                -fx-font-family: 'Segoe UI', sans-serif;
+            """);
+                }
+            }
+        });
+
         ipBox.getChildren().addAll(ipIcon, ipField);
+
+
 
         // Eingabefeld für den Port
         HBox portBox = new HBox(10);
         portBox.setAlignment(Pos.CENTER_LEFT);
+
         Label portIcon = new Label("🔌");
         portIcon.setFont(Font.font("Segoe UI Emoji", 24));
+
         TextField portField = new TextField("3141"); // Standard-Port
         portField.setPromptText("Port eingeben");
         portField.setStyle("""
-            -fx-background-color: white;
-            -fx-border-color: #007acc;
-            -fx-padding: 8;
-            -fx-border-radius: 5;
-            -fx-font-family: 'Segoe UI', sans-serif;
+    -fx-background-color: white;
+    -fx-border-color: #007acc;
+    -fx-padding: 8;
+    -fx-border-radius: 5;
+    -fx-font-family: 'Segoe UI', sans-serif;
+""");
+
+// Event-Listener zur Validierung der Eingabe
+        portField.textProperty().addListener((observable, oldValue, newValue) -> {
+            // Entfernt ungültige Zeichen (nur Zahlen erlaubt)
+            if (!newValue.matches("\\d*")) {
+                portField.setText(oldValue); // Zurücksetzen auf die vorherige gültige Eingabe
+            }
+
+            // Maximal 4 Zeichen (Port)
+            if (newValue.length() > 4) {
+                portField.setText(oldValue); // Zurücksetzen auf die vorherige Eingabe, wenn die Länge überschritten wird
+            }
+        });
+
+// Event-Listener, um den Rahmen bei ungültigen Eingaben rot zu färben
+        portField.focusedProperty().addListener((observable, oldValue, newValue) -> {
+            if (!newValue) { // Wenn das Feld den Fokus verliert
+                try {
+                    int port = Integer.parseInt(portField.getText());
+                    if (port < 0 || port > 65535) { // Ports müssen zwischen 0 und 65535 liegen
+                        throw new NumberFormatException();
+                    }
+                    portField.setStyle("""
+                -fx-background-color: white;
+                -fx-border-color: #007acc;
+                -fx-padding: 8;
+                -fx-border-radius: 5;
+                -fx-font-family: 'Segoe UI', sans-serif;
             """);
+                } catch (NumberFormatException e) {
+                    portField.setStyle("""
+                -fx-background-color: white;
+                -fx-border-color: red;
+                -fx-padding: 8;
+                -fx-border-radius: 5;
+                -fx-font-family: 'Segoe UI', sans-serif;
+            """);
+                }
+            }
+        });
+
         portBox.getChildren().addAll(portIcon, portField);
+
 
         // Hinweistext
         Label hintLabel = new Label("Bitte geben Sie Ihren Benutzernamen, die Server-IP-Adresse und den Port ein.");
@@ -181,6 +291,9 @@ public class ChatClient extends Application {
         primaryStage.setMinHeight(400); // Mindesthöhe
         primaryStage.show(); // Fenster anzeigen
     }
+
+
+
     private Scene createScene() {
         // Erstellt ein BorderPane als Hauptlayout-Container
         BorderPane root = new BorderPane();

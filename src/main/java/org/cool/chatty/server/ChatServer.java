@@ -95,17 +95,41 @@ public class ChatServer {
     // Einstiegspunkt des Programms
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
+        String ipAddress = null;
+        int port = 0;
 
-        // Fragt den Benutzer nach der IP-Adresse, auf der der Server laufen soll
-        System.out.println("Geben Sie die IP-Adresse ein, auf der der Server laufen soll (z.B. 0.0.0.0 für alle Interfaces):");
-        String ipAddress = scanner.nextLine(); // Liest die IP-Adresse von der Konsole ein
+        while (true) {
+            System.out.println("Geben Sie die IP-Adresse ein, auf der der Server laufen soll (z.B. 0.0.0.0 für alle Interfaces):");
+            ipAddress = scanner.nextLine();
+            if (isValidIPv4(ipAddress)) {
+                break;
+            } else {
+                System.out.println("Ungültige IP-Adresse. Bitte geben Sie eine gültige IPv4-Adresse ein.");
+            }
+        }
 
-        // Fragt den Benutzer nach dem Port, auf den der Server warten soll
-        System.out.println("Legen Sie einen Port fest!:");
-        int port = scanner.nextInt(); // Liest den Port von der Konsole ein
+        while (true) {
+            System.out.println("Legen Sie einen Port fest! (nur Zahlen, max. 4-stellig):");
+            String portInput = scanner.nextLine();
+            try {
+                port = Integer.parseInt(portInput);
+                if (port >= 0 && port <= 9999 && portInput.length() <= 4) {
+                    break;
+                } else {
+                    System.out.println("Ungültiger Port. Der Port muss eine Zahl zwischen 0 und 9999 sein und maximal 4-stellig.");
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("Ungültige Eingabe. Der Port muss eine Zahl sein.");
+            }
+        }
 
-        // Erstellt eine neue Instanz des ChatServers mit den angegebenen Parametern
         new ChatServer(ipAddress, port);
+    }
+
+    public static boolean isValidIPv4(String ip) {
+        String ipv4Pattern =
+                "^((25[0-5]|2[0-4][0-9]|[0-1]?[0-9][0-9]?)\\.){3}(25[0-5]|2[0-4][0-9]|[0-1]?[0-9][0-9]?)$";
+        return ip.matches(ipv4Pattern);
     }
 }
 
